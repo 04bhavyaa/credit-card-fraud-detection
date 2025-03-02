@@ -9,3 +9,4 @@ scikit-learn
 geopy
 imblearn
 category_encoders
+flask

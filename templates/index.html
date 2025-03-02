@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Card Fraud Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Credit Card Fraud Detector</h1>
+        
+        <form method="POST">
+            <div class="form-group">
+                <label for="amt">Amount:</label>
+                <input type="number" id="amt" name="amt" step="0.01" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="city_pop">City Population:</label>
+                <input type="number" id="city_pop" name="city_pop" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="job">Job:</label>
+                <input type="text" id="job" name="job" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="hour">Hour of Day (0-23):</label>
+                <input type="number" id="hour" name="hour" min="0" max="23" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="distance">Distance (km):</label>
+                <input type="number" id="distance" name="distance" step="0.01" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="day_of_week">Day of Week (0-6):</label>
+                <input type="number" id="day_of_week" name="day_of_week" min="0" max="6" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="month">Month (1-12):</label>
+                <input type="number" id="month" name="month" min="1" max="12" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="yob">Year of Birth:</label>
+                <input type="number" id="yob" name="yob" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="category">Category:</label>
+                <input type="text" id="category" name="category" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="gender_M">Gender (1=Male, 0=Female):</label>
+                <input type="number" id="gender_M" name="gender_M" min="0" max="1" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="user_avg_amt">User Average Amount:</label>
+                <input type="number" id="user_avg_amt" name="user_avg_amt" step="0.01" value="50.0">
+            </div>
+            
+            <div class="form-group">
+                <label for="user_std_amt">User Std Dev Amount:</label>
+                <input type="number" id="user_std_amt" name="user_std_amt" step="0.01" value="20.0">
+            </div>
+            
+            <button type="submit">Predict</button>
+        </form>
+        
+        {% if result %}
+            <div class="result {% if 'Legitimate' in result %}legitimate{% else %}fraudulent{% endif %}">
+                <h2>{{ result }}</h2>
+            </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        // Simple form validation
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const amt = document.getElementById('amt').value;
+            if (amt <= 0) {
+                e.preventDefault();
+                alert('Amount must be greater than 0');
+            }
+        });
+    </script>
+</body>
+</html>

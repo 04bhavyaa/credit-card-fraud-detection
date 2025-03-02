@@ -69,13 +69,17 @@ class PredictionPipeline:
             logging.info("Preprocessing input data...")
 
             # Identify categorical features
-            categorical_features = data.select_dtypes(include=["object"]).columns.tolist()
+            onehot_encode_cols = ['category', 'gender']
+            freq_encode_cols = ['job']  # Assuming high-cardinality
             
             # Apply saved encoder
-            X_encoded = pd.DataFrame(self.encoder.transform(data[categorical_features]))
+            X_encoded = pd.DataFrame(self.encoder.fit_transform(data[onehot_encode_cols]))
+            
+            for col in freq_encode_cols:
+                data[col] = data[col].map(data[col].value_counts(normalize=True))
             
             # Keep non-categorical features
-            data = data.drop(columns=categorical_features)
+            data = data.drop(columns=onehot_encode_cols)
             data = pd.concat([data, X_encoded], axis=1)
             
             logging.info("Input data preprocessing complete.")
