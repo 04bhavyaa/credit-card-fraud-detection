@@ -1,0 +1,11 @@
+loguru
+tqdm
+pydantic-settings
+pandas
+numpy
+seaborn
+matplotlib
+scikit-learn
+geopy
+imblearn
+category_encoders
