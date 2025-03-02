@@ -3,19 +3,15 @@ import joblib
 from src.logger import logging
 from src.exception import CustomException
 from src.utils import load_object
+import sys
 
 # Paths for loading models
 MODEL_PATH = "artifacts/rf_model.joblib"
 ENCODER_PATH = "artifacts/onehot_encoder.joblib"
 
 class CustomClass:
-    """
-    A helper class to store transaction details and convert them into a DataFrame 
-    for fraud prediction.
-    """
-
     def __init__(self, amt, city_pop, job, hour, distance, day_of_week, month, transactions_per_hour,
-                 merchant_fraud_rate, user_avg_amt, user_std_amt, yob, category, gender_M):
+                 merchant_fraud_rate, user_avg_amt, user_std_amt, yob, category, gender):
         self.amt = amt
         self.city_pop = city_pop
         self.job = job
@@ -29,12 +25,9 @@ class CustomClass:
         self.user_std_amt = user_std_amt
         self.yob = yob
         self.category = category
-        self.gender_M = gender_M
+        self.gender = gender
 
     def get_data_as_dataframe(self):
-        """
-        Converts input transaction data into a DataFrame format.
-        """
         data_dict = {
             "amt": [self.amt],
             "city_pop": [self.city_pop],
@@ -49,13 +42,12 @@ class CustomClass:
             "user_std_amt": [self.user_std_amt],
             "yob": [self.yob],
             "category": [self.category],
-            "gender_M": [self.gender_M],
+            "gender": [self.gender],
         }
         return pd.DataFrame(data_dict)
     
 class PredictionPipeline:
     def __init__(self):
-        """Load the trained model and encoder."""
         try:
             logging.info("Loading trained model and encoder...")
             self.model = load_object(MODEL_PATH)
@@ -64,16 +56,17 @@ class PredictionPipeline:
             raise CustomException(e)
 
     def preprocess_input(self, data: pd.DataFrame):
-        """Preprocess input data using the saved encoder."""
         try:
             logging.info("Preprocessing input data...")
-
+            
             # Identify categorical features
             onehot_encode_cols = ['category', 'gender']
             freq_encode_cols = ['job']  # Assuming high-cardinality
             
-            # Apply saved encoder
-            X_encoded = pd.DataFrame(self.encoder.fit_transform(data[onehot_encode_cols]))
+            # Apply saved encoder - maintain column names
+            encoded_array = self.encoder.transform(data[onehot_encode_cols])
+            encoded_columns = self.encoder.get_feature_names_out(onehot_encode_cols)
+            X_encoded = pd.DataFrame(encoded_array, columns=encoded_columns, index=data.index)
             
             for col in freq_encode_cols:
                 data[col] = data[col].map(data[col].value_counts(normalize=True))
@@ -85,19 +78,17 @@ class PredictionPipeline:
             logging.info("Input data preprocessing complete.")
             return data
         except Exception as e:
-            raise CustomException(e)
+            raise CustomException(e, sys)
 
     def predict(self, data: pd.DataFrame):
-        """Make predictions using the trained model."""
         try:
             processed_data = self.preprocess_input(data)
             prediction = self.model.predict(processed_data)
             return prediction
         except Exception as e:
-            raise CustomException(e)
+            raise CustomException(e, sys)
 
 if __name__ == "__main__":
-    # Example usage
     sample_data = pd.DataFrame({
         "amt": [100.0],
         "city_pop": [50000],
@@ -112,7 +103,7 @@ if __name__ == "__main__":
         "user_std_amt": [20.0],
         "yob": [1985],
         "category": ["grocery_pos"],
-        "gender_M": [1]
+        "gender": ["M"]
     })
 
     pipeline = PredictionPipeline()

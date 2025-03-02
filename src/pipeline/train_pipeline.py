@@ -16,6 +16,7 @@ ENCODER_PATH = "artifacts/onehot_encoder.joblib"
 class TrainPipeline:
     def __init__(self, data_path: str):
         self.data_path = data_path
+        self.encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
 
     def load_data(self):
         """Load dataset from the provided path."""
@@ -27,7 +28,7 @@ class TrainPipeline:
             raise CustomException(e)
 
     def preprocess_data(self, df):
-        """Handle categorical variables using OneHotEncoding."""
+        """Preprocess data using One-Hot Encoding and Frequency Encoding."""
         try:
             logging.info("Preprocessing data...")
             
@@ -36,18 +37,22 @@ class TrainPipeline:
             y = df["is_fraud"]
             
             # Identify categorical features
-            categorical_features = X.select_dtypes(include=["object"]).columns.tolist()
+            onehot_encode_cols = ['category', 'gender']
+            freq_encode_cols = ['job']  # High-cardinality column
             
-            # Apply OneHotEncoding
-            encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
-            X_encoded = pd.DataFrame(encoder.fit_transform(X[categorical_features]))
+            # Apply One-Hot Encoding
+            X_encoded = pd.DataFrame(self.encoder.fit_transform(X[onehot_encode_cols]))
             
-            # Keep non-categorical features
-            X = X.drop(columns=categorical_features)
+            # Apply Frequency Encoding
+            for col in freq_encode_cols:
+                X[col] = X[col].map(X[col].value_counts(normalize=True))
+            
+            # Drop original categorical columns and merge transformed features
+            X = X.drop(columns=onehot_encode_cols)
             X = pd.concat([X, X_encoded], axis=1)
             
             logging.info("Data preprocessing complete.")
-            return X, y, encoder
+            return X, y
         except Exception as e:
             raise CustomException(e)
 
@@ -76,7 +81,7 @@ class TrainPipeline:
         """Execute the full training pipeline."""
         try:
             df = self.load_data()
-            X, y, encoder = self.preprocess_data(df)
+            X, y = self.preprocess_data(df)
             
             # Train-test split
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -89,7 +94,7 @@ class TrainPipeline:
             
             # Save model and encoder
             save_object(MODEL_PATH, model)
-            save_object(ENCODER_PATH, encoder)
+            save_object(ENCODER_PATH, self.encoder)
 
             logging.info(f"Model saved at {MODEL_PATH}")
             logging.info(f"Encoder saved at {ENCODER_PATH}")

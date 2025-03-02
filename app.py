@@ -30,7 +30,7 @@ def home():
             
             yob = int(request.form['yob'])
             category = request.form['category']
-            gender_M = int(request.form['gender_M'])
+            gender = request.form['gender']
             
             # Create input data object
             input_data = {
@@ -47,7 +47,7 @@ def home():
                 'user_std_amt': user_std_amt,
                 'yob': yob,
                 'category': category,
-                'gender_M': gender_M
+                'gender': gender
             }
             
             # Prepare data for prediction
